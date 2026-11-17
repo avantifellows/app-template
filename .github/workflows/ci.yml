@@ -1,0 +1,23 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks scans the whole history
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install gitleaks
+        run: |
+          mkdir -p "$HOME/bin"
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | tar xz -C "$HOME/bin" gitleaks
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      # Repo checks of the go-live check (no --url). The real go-live run is an approver's, from the template.
+      - run: node scripts/go-live.mjs

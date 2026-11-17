@@ -1,0 +1,23 @@
+node_modules/
+.next/
+.npm/
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets: real values live only in Amplify's environment variables.
+.env*
+!.env.example
+
+# Data never goes in this repo: read it live with the credentials a dev gives you.
+data/
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.parquet
+*.sqlite
+*.sqlite3
+*.db
+*.zip
+
+go-live-report.md

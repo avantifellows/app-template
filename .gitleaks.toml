@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "lockfile integrity hashes"
+paths = ['''package-lock\.json''']
