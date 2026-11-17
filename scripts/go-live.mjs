@@ -21,8 +21,11 @@ const arg = (name) => {
 const REPO = path.resolve(arg('--repo') ?? '.');
 const URL_ARG = arg('--url')?.replace(/\/+$/, '');
 
-// Files that must be exactly the template's: the build, the sign-in rules and the gate.
-const PINNED = ['amplify.yml', 'scripts/write-env.mjs', 'src/proxy.ts', 'src/lib/gate.ts', 'src/lib/rules.ts'];
+// Files that must be exactly the template's: the build, sign-in, the gate, and the configs that could switch the
+// gate off without touching it (pageExtensions, path aliases). package.json's scripts are compared separately.
+const PINNED = ['amplify.yml', 'scripts/write-env.mjs', 'src/proxy.ts', 'src/lib/gate.ts', 'src/lib/rules.ts',
+  'src/auth.ts', 'src/lib/session.ts', 'next.config.ts', 'tsconfig.json', 'postcss.config.mjs',
+  'src/app/api/auth/[...nextauth]/route.ts'];
 const PUBLIC_OK = new Set(['public/robots.txt', 'public/favicon.ico']);
 const DATA_EXT = /\.(csv|tsv|xlsx?|parquet|sqlite3?|db|zip|pdf)$/i;
 const STORAGE_DEPS = ['firebase', 'firebase-admin', '@supabase/supabase-js', 'googleapis', 'google-spreadsheet',
@@ -42,7 +45,9 @@ const read = (f) => fs.readFileSync(path.join(REPO, f), 'utf8');
   const bin = spawnSync('gitleaks', ['version']).status === 0 ? 'gitleaks' : null;
   if (!bin) add('Secrets (gitleaks, whole history)', 'FAIL', ['gitleaks is not installed: brew install gitleaks']);
   else {
-    const r = spawnSync(bin, ['detect', '--source', REPO, '--config', path.join(TEMPLATE, '.gitleaks.toml'), '--redact', '--no-banner'], { encoding: 'utf8' });
+    // The app's own .gitleaksignore and gitleaks:allow comments are not honoured: the check is the template's.
+    const r = spawnSync(bin, ['detect', '--source', REPO, '--config', path.join(TEMPLATE, '.gitleaks.toml'),
+      '--gitleaks-ignore-path', path.join(TEMPLATE, 'scripts'), '--ignore-gitleaks-allow', '--redact', '--no-banner'], { encoding: 'utf8' });
     const out = (r.stdout + r.stderr).trim().split('\n').slice(-20);
     add('Secrets (gitleaks, whole history)', r.status === 0 ? 'PASS' : 'FAIL', r.status === 0 ? [] : out);
   }
@@ -65,14 +70,22 @@ if (REPO === TEMPLATE) add('Standard files match the template', 'PASS', ['(this 
 else {
   const hash = (p) => (fs.existsSync(p) ? crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex') : 'missing');
   const diff = PINNED.filter((f) => hash(path.join(REPO, f)) !== hash(path.join(TEMPLATE, f)));
+  const scripts = (dir) => JSON.stringify(JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')).scripts ?? {});
+  if (scripts(REPO) !== scripts(TEMPLATE)) diff.push('package.json "scripts"');
   add('Standard files match the template', diff.length ? 'FAIL' : 'PASS', diff.map((f) => `${f} differs from the template's (or is missing)`));
+}
+
+// /api/auth/* is open without signing in, so nothing but Auth.js's own route may live there.
+{
+  const extra = tracked.filter((f) => f.startsWith('src/app/api/auth/') && f !== 'src/app/api/auth/[...nextauth]/route.ts');
+  add('Nothing extra under /api/auth (open to signed-out visitors)', extra.length ? 'FAIL' : 'PASS', extra);
 }
 
 // 4. Writes, storage and personal data in logs: a dev or approver must look.
 {
   const notes = [];
   const pkg = JSON.parse(read('package.json'));
-  for (const d of Object.keys({ ...pkg.dependencies })) if (STORAGE_DEPS.includes(d)) notes.push(`dependency ${d}: storage or write access; a dev must sign off`);
+  for (const d of Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })) if (STORAGE_DEPS.includes(d)) notes.push(`dependency ${d}: storage or write access; a dev must sign off`);
   for (const f of tracked.filter((f) => /^src\/.*\.(tsx?|jsx?|mjs)$/.test(f))) {
     read(f).split('\n').forEach((line, i) => {
       const at = `${f}:${i + 1}`;
@@ -86,13 +99,13 @@ else {
 
 // 5. Dependencies.
 {
-  const r = spawnSync('npm', ['audit', '--omit=dev', '--json'], { cwd: REPO, encoding: 'utf8' });
+  const r = spawnSync('npm', ['audit', '--json'], { cwd: REPO, encoding: 'utf8' });
   try {
     const v = JSON.parse(r.stdout).metadata.vulnerabilities;
     const bad = (v.high ?? 0) + (v.critical ?? 0);
-    add('Dependencies (npm audit, production)', bad ? 'FAIL' : 'PASS', [`critical ${v.critical ?? 0}, high ${v.high ?? 0}, moderate ${v.moderate ?? 0}, low ${v.low ?? 0}`]);
+    add('Dependencies (npm audit)', bad ? 'FAIL' : 'PASS', [`critical ${v.critical ?? 0}, high ${v.high ?? 0}, moderate ${v.moderate ?? 0}, low ${v.low ?? 0}`]);
   } catch {
-    add('Dependencies (npm audit, production)', 'FAIL', ['npm audit did not run: ' + (r.stderr || r.stdout).trim().slice(0, 300)]);
+    add('Dependencies (npm audit)', 'FAIL', ['npm audit did not run: ' + (r.stderr || r.stdout).trim().slice(0, 300)]);
   }
 }
 
