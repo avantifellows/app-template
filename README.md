@@ -1,10 +1,42 @@
 # AF app template
 
-Starting point for small Avanti Fellows internal apps: Next.js on AWS Amplify, Google sign-in for
-avantifellows.org accounts only, every page and API behind sign-in, and a go-live check before the app gets its
-real address. The rules the app must follow are in [CLAUDE.md](CLAUDE.md); read them first.
+A starting point for small Avanti Fellows internal apps, built with Claude, no coding needed. Sign-in with
+avantifellows.org Google accounts, every page private, and the rules are already set up.
 
-The path: mock it up as a Claude artifact → build from this template → go-live check → `<app>.avantifellows.org`.
+## Should this be an app?
+
+**Start with a Claude artifact. Move to an app only when you have to.**
+
+An artifact is enough when:
+- it is a mockup, a calculator, a checklist, an explainer, or a dashboard of summary numbers;
+- it shows no student personal data: no names, phone numbers, roll numbers or per-student marks;
+- it is fine as a page shared by link.
+
+Build an app from this template when:
+- it shows student records or other personal data;
+- it needs live data from our databases, kept up to date, not numbers pasted in once;
+- only AF staff should see it, signed in with their AF Google account, with a record of who used it.
+
+Talk to a dev before building if:
+- different people should see different schools;
+- it needs to save anything: notes, edits, uploads, statuses;
+- people outside AF need to use it.
+
+## How it works
+
+1. Mock it up as a Claude artifact, so everyone agrees on what it does.
+2. Ask Pritam, Deepansh or Surya for a repo made from this template (and, for live data, a dev for read-only
+   access).
+3. Open the repo in Claude Code. Claude asks the questions below first, writes the answers into `APP.md`, then
+   builds. Sign-in, privacy and the rules are already in place, and Claude will not take them out.
+4. When it works, an approver runs the go-live check and gives it its address: `<app>.avantifellows.org`.
+
+You do not need to code, or have AWS, Google Cloud, Vercel or Cloudflare accounts. Never put data files in the
+repo, student details in logs or anything shared, or host the app on your own accounts. The full rules are in
+[CLAUDE.md](CLAUDE.md).
+
+Under the hood: Next.js on AWS Amplify, Google sign-in for avantifellows.org accounts only, every page and API
+behind sign-in, and a go-live check before the app gets its real address.
 
 ## Before you start
 
