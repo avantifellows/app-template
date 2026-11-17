@@ -4,13 +4,33 @@ This is an Avanti Fellows internal app built from `avantifellows/app-template`. 
 developers. Follow these rules exactly; when a request would break one, say which rule and that it needs a dev or
 an approver (Pritam, Deepansh or Surya). Do not find a way around it.
 
+## First: the app brief
+
+Before writing or changing any code, open `APP.md`. If it says `Status: not filled in`, or a line is blank, stop and
+ask the builder these questions, one or two at a time, in plain words:
+
+1. What is the app for, and who will use it?
+2. Will it show student personal data: names, phone numbers, roll numbers, marks per student?
+   If no, say that a Claude artifact may be enough and there may be no need for this repo.
+3. Who should see what? Every signed-in AF staff member sees everything (fine), or each person only some
+   schools (stop: that needs a dev, from LMS seats).
+4. Does it need to save anything: notes, edits, uploads, status? If yes, stop: a dev decides where and how first.
+5. What data does it read, and from where? Credentials come from a dev; never from the builder's own accounts.
+6. Who owns it, and when should it be reviewed or retired?
+
+Write the answers into `APP.md` and change the status line to `Status: filled in <date>`. If an answer is "needs a
+dev", say so plainly, write it down, and build only the parts that do not depend on it. When the app changes in a
+way that changes an answer, update `APP.md` in the same change.
+
 ## Rules
 
 **Sign-in and access**
 - Every page lives under `src/app/(app)/` and every API route starts with `apiUser()` → 401. Server actions call
   `requireUser()`. The proxy (`src/proxy.ts`) already blocks signed-out requests; check again anyway.
-- Never edit `src/proxy.ts`, `src/lib/gate.ts`, `src/lib/rules.ts`, `scripts/write-env.mjs` or `amplify.yml`.
-  The go-live check fails if they differ from the template. No page or API may be opened to signed-out visitors.
+- Never edit `src/auth.ts`, `src/proxy.ts`, `src/lib/gate.ts`, `src/lib/rules.ts`, `src/lib/session.ts`,
+  `src/app/api/auth/`, `next.config.ts`, `tsconfig.json`, `postcss.config.mjs`, `amplify.yml`,
+  `scripts/write-env.mjs` or the `scripts` in `package.json`. The go-live check fails if they differ from the
+  template's. No page or API may be opened to signed-out visitors.
 - Access is "every signed-in AF staff member sees everything". If the app should show each person only some
   schools, stop: that comes from LMS seats and needs a dev. Never a hand-made list of emails or schools.
 - Only avantifellows.org accounts sign in. People outside AF (partners, students, parents) → a dev.

@@ -6,6 +6,18 @@ real address. The rules the app must follow are in [CLAUDE.md](CLAUDE.md); read 
 
 The path: mock it up as a Claude artifact → build from this template → go-live check → `<app>.avantifellows.org`.
 
+## Before you start
+
+Most of these apps are built with Claude. The first conversation in a new repo always starts with the questions in
+[APP.md](APP.md), and the answers are kept there (CLAUDE.md tells Claude to do this):
+
+1. What is it for, and who uses it?
+2. Does it show student personal data? If not, a Claude artifact may be enough.
+3. Who sees what: all AF staff, or only some schools (needs a dev)?
+4. Does it save anything (needs a dev)?
+5. What data does it read, and from where (credentials from a dev)?
+6. Who owns it, and when is it reviewed or retired?
+
 ## Who does what
 
 **Approvers: Pritam, Deepansh or Surya.** Builders do not need AWS, Google Cloud or Cloudflare access.

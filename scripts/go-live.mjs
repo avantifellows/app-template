@@ -97,6 +97,16 @@ else {
   add('Writes, storage, personal data in logs', notes.length ? 'CHECK' : 'PASS', notes);
 }
 
+// App brief: filled in, for the approver to read. (The template's own APP.md is the blank form.)
+if (REPO !== TEMPLATE) {
+  const f = path.join(REPO, 'APP.md');
+  const brief = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
+  const blank = brief.split('\n').filter((l) => /^- \*\*/.test(l) && /:(\*\*)?\s*$/.test(l)).map((l) => l.split('**')[1]);
+  if (!brief) add('App brief (APP.md)', 'FAIL', ['APP.md is missing']);
+  else if (/Status: not filled in/.test(brief) || blank.length) add('App brief (APP.md)', 'FAIL', ['not filled in' + (blank.length ? ': ' + blank.join(', ') : '')]);
+  else add('App brief (APP.md)', 'CHECK', ['read APP.md: the answers must match what the app does']);
+}
+
 // 5. Dependencies.
 {
   const r = spawnSync('npm', ['audit', '--json'], { cwd: REPO, encoding: 'utf8' });
